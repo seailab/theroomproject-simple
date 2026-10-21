@@ -1,0 +1,38 @@
+name: Publish The Room Project
+on:
+  push:
+    branches: [main]
+    paths:
+      - theroomproject-simple.zip
+      - .github/workflows/deploy-pages.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify and unpack the approved website
+        run: |
+          echo '1c4e1aadafe044c642f58c13c91e6ffe651f9359dec5357d56f0e10ac33a0379  theroomproject-simple.zip' | sha256sum --check
+          mkdir -p _site
+          unzip -q theroomproject-simple.zip -d _site
+          test -f _site/index.html
+          test -f _site/assets/exhibition.css
+          test -f _site/assets/fonts/saira-latin.woff2
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4
